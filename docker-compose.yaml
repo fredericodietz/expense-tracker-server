@@ -2,38 +2,40 @@ services:
   app:
     build: .
     ports:
-      - '3000:3000'
-    depends_on:
-      - db
+      - "3000:3000"
     environment:
-      - DB_USER=youruser
-      - DB_PASSWORD=yourpassword
-      - DB_NAME=expensetracker
       - DB_HOST=db
       - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - DB_NAME=expense_tracker
+    depends_on:
+      - db
     volumes:
       - .:/usr/src/app
-    networks:
-      - expensetracker-net
 
   db:
-    image: postgres:13
+    image: postgres:14
     environment:
-      POSTGRES_USER: youruser
-      POSTGRES_PASSWORD: yourpassword
-      POSTGRES_DB: expensetracker
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: expense_tracker
     ports:
-      - '5432:5432'
+      - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
-      - ./pg-init.sql:/docker-entrypoint-initdb.d/init.sql
-      - ${SEED_DATA:+./seed.sql:/docker-entrypoint-initdb.d/seed.sql}
-    networks:
-      - expensetracker-net
 
-networks:
-  expensetracker-net:
-    driver: bridge
+  seed:
+    build: .
+    depends_on:
+      - db
+    command: "node seeders/seed.js"
+    environment:
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - DB_NAME=expense_tracker
 
 volumes:
   pgdata:
